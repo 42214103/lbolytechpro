@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LBOLY_TECHPRO_2026.V1.0 — Suivi Raccordements FTTH</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#f2f6fc; --panel:#ffffff; --panel2:#e8effa; --line:#c9d8ee;
+  --txt:#0f2a5f; --muted:#5a6c8e; --accent:#1d63d8; --green:#0e9f6e;
+  --red:#e02424; --amber:#f97316; --violet:#7c3aed; --orange:#f97316;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Segoe UI",Arial,sans-serif;background:linear-gradient(180deg,#eaf1fb 0%,#f7fafd 40%,#fff 100%);color:var(--txt);min-height:100vh}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding:14px 22px;background:linear-gradient(90deg,#0b3d91,#1d63d8 65%,#f97316);border-bottom:3px solid #f97316;color:#fff}
+.brand h1{font-size:19px;letter-spacing:.5px;color:#fff}
+.brand h1 span{color:#ffd9b8}
+.brand p{font-size:12px;color:#dbe7ff;margin-top:2px}
+.hbtns{display:flex;gap:8px;flex-wrap:wrap}
+button{cursor:pointer;border:none;border-radius:8px;font-size:13px;font-weight:600}
+.btn{background:#fff;color:#0f2a5f;padding:9px 14px;border:1px solid var(--line)}
+.btn:hover{background:#eaf1fb}
+.btn.primary{background:#1d63d8;border-color:#1d63d8;color:#fff}
+.btn.primary:hover{background:#154fb0}
+.btn.success{background:#f97316;border-color:#f97316;color:#fff}
+.btn.success:hover{background:#e2620c}
+.btn.danger{background:#e02424;border-color:#e02424;color:#fff}
+nav{display:flex;gap:4px;padding:10px 22px 0;background:transparent;border-bottom:1px solid var(--line)}
+nav button{background:transparent;color:var(--muted);padding:10px 18px;border-radius:10px 10px 0 0;font-size:14px}
+nav button.active{background:#fff;color:#0b3d91;border:1px solid var(--line);border-bottom-color:#fff;font-weight:700}
+main{padding:18px 22px 40px}
+.tab{display:none}.tab.active{display:block}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:16px}
+.kpi{background:#fff;border:1px solid var(--line);border-top:3px solid #1d63d8;border-radius:12px;padding:14px 16px;box-shadow:0 2px 8px rgba(11,61,145,.06)}
+.kpi .v{font-size:26px;font-weight:800;margin-top:4px;color:#0b3d91}
+.kpi .l{font-size:12px;color:var(--muted)}
+.kpi .s{font-size:11px;color:var(--muted);margin-top:4px}
+.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;box-shadow:0 2px 8px rgba(11,61,145,.06)}
+.card h3{font-size:13px;color:#0b3d91;font-weight:700;margin-bottom:10px}
+.card canvas{max-height:260px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+.toolbar input,.toolbar select{background:#fff;border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:8px 10px;font-size:13px}
+.toolbar input[type=search]{min-width:230px}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+thead th{position:sticky;top:0;background:#eaf1fb;color:#0b3d91;text-align:left;padding:9px 8px;font-size:11.5px;text-transform:uppercase;letter-spacing:.4px;cursor:pointer;white-space:nowrap}
+.twrap{overflow:auto;max-height:62vh;border:1px solid var(--line);border-radius:12px;background:#fff}
+tbody td{padding:8px;border-bottom:1px solid #e5edf9;white-space:nowrap;max-width:230px;overflow:hidden;text-overflow:ellipsis}
+tbody tr:hover{background:#fff4ea}
+.badge{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700}
+.b-bloque{background:#fee2e2;color:#991b1b}.b-encours{background:#ffedd5;color:#9a3412}
+.b-etude{background:#dbeafe;color:#1e40af}.b-raccorde{background:#d1fae5;color:#065f46}
+.b-vert{background:#dcfce7;color:#166534}
+.pager{display:flex;gap:8px;align-items:center;margin-top:10px;font-size:13px;color:var(--muted)}
+dialog{background:#fff;color:var(--txt);border:1px solid var(--line);border-radius:14px;padding:0;max-width:860px;width:94vw;box-shadow:0 20px 60px rgba(11,61,145,.25)}
+dialog::backdrop{background:rgba(11,61,145,.35)}
+.dhead{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line);background:linear-gradient(90deg,#eaf1fb,#fff 80%);border-radius:14px 14px 0 0}
+.dhead h2{font-size:15px;color:#0b3d91}
+.dbody{padding:16px 18px;max-height:66vh;overflow:auto}
+.dfoot{display:flex;gap:8px;justify-content:flex-end;padding:12px 18px;border-top:1px solid var(--line)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.fld label{display:block;font-size:11px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.3px}
+.fld input,.fld select,.fld textarea{width:100%;background:#fff;border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:8px;font-size:13px}
+.fld textarea{min-height:60px;resize:vertical}
+.section-t{font-size:12px;color:#f97316;font-weight:700;text-transform:uppercase;margin:14px 0 8px;letter-spacing:.5px}
+.timeline{list-style:none;font-size:12px;margin-top:6px}
+.timeline li{padding:6px 0 6px 14px;border-left:2px solid var(--line);margin-left:6px;position:relative;color:var(--muted)}
+.timeline li::before{content:"";position:absolute;left:-5px;top:11px;width:8px;height:8px;border-radius:50%;background:#f97316}
+.xclose{background:transparent;color:var(--muted);font-size:20px;padding:2px 8px}
+.xclose:hover{color:#0b3d91}
+#toast{position:fixed;bottom:22px;right:22px;background:#0b3d91;color:#fff;padding:12px 18px;border-radius:10px;font-size:13px;opacity:0;transition:.3s;pointer-events:none;z-index:99;box-shadow:0 8px 24px rgba(11,61,145,.35)}
+#toast.show{opacity:1}
+.warn{background:#ffedd5;color:#9a3412;padding:10px 16px;border-radius:10px;font-size:13px;margin-bottom:12px;display:none}
+.upd{font-size:11.5px;color:var(--muted)}
+.upd b{color:#0e9f6e}
+.auth{position:fixed;inset:0;background:linear-gradient(160deg,#0b3d91 0%,#1d63d8 55%,#f97316 130%);z-index:50;display:flex;align-items:center;justify-content:center}
+.authbox{background:#fff;border:1px solid var(--line);border-radius:16px;padding:30px 34px;width:400px;max-width:92vw;box-shadow:0 20px 60px rgba(2,6,23,.45)}
+.authbox h2{font-size:17px;margin-bottom:4px;color:#0b3d91}
+.authbox .sub{font-size:12.5px;color:var(--muted);margin-bottom:18px}
+.authbox .fld{margin-bottom:12px}
+.authbox .btn{width:100%;padding:11px;font-size:14px;margin-top:6px}
+.autherr{color:var(--red);font-size:12.5px;min-height:18px;margin-top:8px}
+.shield{font-size:34px;text-align:center;margin-bottom:10px;color:#f97316}
+.lockbar{display:flex;align-items:center;gap:8px;font-size:12px;color:#dbe7ff}
+.lockbar .who{background:#f97316;color:#fff;padding:5px 10px;border-radius:999px;font-weight:700;font-size:11.5px}
+.pwbar{height:5px;border-radius:3px;background:#e8effa;margin-top:4px;overflow:hidden}
+.pwbar i{display:block;height:100%;width:0;background:var(--red);transition:.2s}
+.note{font-size:11.5px;color:var(--muted);margin-top:14px;line-height:1.5;border-top:1px solid var(--line);padding-top:10px}
+header .btn{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.45)}
+header .btn:hover{background:rgba(255,255,255,.28)}
+header .btn.primary{background:#f97316;border-color:#f97316}
+header .btn.primary:hover{background:#e2620c}
+header .upd{color:#dbe7ff}
+header .upd b{color:#ffd9b8}
+@media print{body>*{display:none}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <h1>LBOLY_<span>TECHPRO</span>_2026 <small style="color:var(--muted)">V1.0</small></h1>
+    <p>Suivi des activités de raccordement FTTH — Instances &amp; déploiement</p>
+  </div>
+  <div class="hbtns">
+    <span class="upd" id="lastUpdate"></span>
+    <span class="lockbar" id="sessionBar" style="display:none">
+      <span class="who" id="whoami"></span>
+      <button class="btn" id="btnUsers" onclick="renderUsers();document.getElementById('dlgUsers').showModal()" style="display:none">Utilisateurs</button>
+      <button class="btn danger" onclick="lockApp(true)">Verrouiller</button>
+    </span>
+    <span id="authedActions" style="display:none;gap:8px" class="hbtns">
+      <button class="btn" onclick="document.getElementById('fileImport').click()">Importer Excel</button>
+      <input type="file" id="fileImport" accept=".xlsx,.xls" style="display:none" onchange="importExcel(this.files[0])">
+      <button class="btn primary" onclick="openNew()">+ Nouvelle instance</button>
+      <button class="btn" onclick="exportAll()">Exporter tout (XLSX)</button>
+      <button class="btn" onclick="backupVault()">Sauvegarder le coffre</button>
+      <button class="btn" onclick="document.getElementById('fileRestore').click()">Restaurer</button>
+      <input type="file" id="fileRestore" accept=".json" style="display:none" onchange="restoreVault(this)">
+      <button class="btn danger" onclick="resetData()">Vider la base</button>
+    </span>
+  </div>
+</header>
+<nav>
+  <button class="active" data-tab="dash" onclick="switchTab('dash')">Tableau de bord</button>
+  <button data-tab="table" onclick="switchTab('table')">Suivi des instances</button>
+  <button data-tab="hist" onclick="switchTab('hist')">Historique raccordements</button>
+</nav>
+<main>
+<div class="warn" id="libWarn">Bibliothèques (Graphiques / Export Excel) non chargées — vérifiez la connexion Internet.</div>
+
+<section class="tab active" id="tab-dash">
+  <div class="toolbar">
+    <label style="font-size:13px;color:var(--muted)">Ville :</label>
+    <select id="dashVille" onchange="refreshAll()"><option value="">Toutes les villes</option></select>
+    <button class="btn success" onclick="exportDashboard()">Exporter synthèse dashboard (XLSX)</button>
+    <span class="upd" id="dashCount"></span>
+  </div>
+  <div class="kpis" id="kpis"></div>
+  <div class="charts">
+    <div class="card"><h3>État d'avancement</h3><canvas id="chAvanc"></canvas></div>
+    <div class="card"><h3>Résultat de l'étude technique</h3><canvas id="chEtude"></canvas></div>
+    <div class="card"><h3>Instances par ville</h3><canvas id="chVille"></canvas></div>
+    <div class="card"><h3>Principaux blocages</h3><canvas id="chProb"></canvas></div>
+    <div class="card"><h3>Enregistrements par mois (12 derniers mois)</h3><canvas id="chMois"></canvas></div>
+    <div class="card"><h3>Besoins en poteaux par ville (béton / métallique)</h3><canvas id="chPoteaux"></canvas></div>
+  </div>
+</section>
+
+<section class="tab" id="tab-table">
+  <div class="toolbar">
+    <input type="search" id="q" placeholder="Recherche : client, n° abonnement, localisation..." oninput="state.page=1;renderTable()">
+    <select id="fVille" onchange="state.page=1;renderTable()"><option value="">Ville — toutes</option></select>
+    <select id="fAvanc" onchange="state.page=1;renderTable()">
+      <option value="">Avancement — tous</option><option>Bloqué</option><option>En cours de raccordement</option><option>Etudes en cours</option><option>Raccordé</option>
+    </select>
+    <select id="fEquipe" onchange="state.page=1;renderTable()"><option value="">Équipe — toutes</option></select>
+    <button class="btn" onclick="document.getElementById('fileImport2').click()">Fusionner fichier Excel</button>
+    <input type="file" id="fileImport2" accept=".xlsx,.xls" style="display:none" onchange="importExcel(this.files[0])">
+  </div>
+  <div class="twrap">
+    <table>
+      <thead><tr>
+        <th onclick="sortBy('numeroAbonnement')">N° Abonnement</th>
+        <th onclick="sortBy('nomClient')">Client</th>
+        <th onclick="sortBy('ville')">Ville</th>
+        <th onclick="sortBy('localisation')">Localisation</th>
+        <th onclick="sortBy('dateEnregistrement')">Date inst.</th>
+        <th onclick="sortBy('dureeAttente')">Attente (j)</th>
+        <th onclick="sortBy('etudeTechnique')">Etude</th>
+        <th onclick="sortBy('avancement')">Avancement</th>
+        <th onclick="sortBy('probleme')">Problème</th>
+        <th onclick="sortBy('equipe')">Équipe</th>
+        <th>Actions</th>
+      </tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+  <div class="pager">
+    <button class="btn" onclick="state.page--;renderTable()">← Préc.</button>
+    <span id="pageInfo"></span>
+    <button class="btn" onclick="state.page++;renderTable()">Suiv. →</button>
+  </div>
+</section>
+
+<section class="tab" id="tab-hist">
+  <div class="card"><h3>Raccordements historiques consolidés (source : feuille RACCORDEMENTS)</h3>
+    <table style="margin-top:8px"><thead><tr><th>Ville</th><th>Total raccordés</th><th>Part</th></tr></thead>
+    <tbody id="histBody"></tbody></table>
+  </div>
+</section>
+</main>
+
+<dialog id="dlgDetail">
+  <div class="dhead"><h2 id="dlgTitle">Fiche client</h2><button class="xclose" onclick="closeDlg('dlgDetail')">✕</button></div>
+  <div class="dbody" id="dlgBody"></div>
+  <div class="dfoot">
+    <button class="btn" onclick="closeDlg('dlgDetail')">Fermer</button>
+    <button class="btn success" onclick="exportReport(currentId)">Exporter rapport de progression (XLSX)</button>
+    <button class="btn primary" onclick="printReport(currentId)">Imprimer / PDF</button>
+    <button class="btn primary" onclick="saveDetail()">Enregistrer les modifications</button>
+  </div>
+</dialog>
+
+<dialog id="dlgNew">
+  <div class="dhead"><h2>Nouvelle instance de raccordement</h2><button class="xclose" onclick="closeDlg('dlgNew')">✕</button></div>
+  <div class="dbody">
+    <div class="grid3">
+      <div class="fld"><label>N° abonnement *</label><input id="n_num"></div>
+      <div class="fld"><label>Nom du client *</label><input id="n_cli"></div>
+      <div class="fld"><label>Ville *</label><input id="n_ville" list="villeList"><datalist id="villeList"></datalist></div>
+      <div class="fld"><label>Commune</label><input id="n_commune"></div>
+      <div class="fld"><label>Localisation</label><input id="n_loc"></div>
+      <div class="fld"><label>Contact 1</label><input id="n_c1"></div>
+      <div class="fld"><label>Contact 2</label><input id="n_c2"></div>
+      <div class="fld"><label>Zone PCO</label><input id="n_zone"></div>
+      <div class="fld"><label>PCO</label><input id="n_pco"></div>
+      <div class="fld"><label>Étude technique</label><select id="n_etude"><option>Etude non réalisée</option><option>Sans PCO</option><option>PCO Saturé</option><option>Hors zone</option><option>Avec PCO</option></select></div>
+      <div class="fld"><label>Avancement</label><select id="n_av"><option>Etudes en cours</option><option>Bloqué</option><option>En cours de raccordement</option><option>Raccordé</option></select></div>
+      <div class="fld"><label>Équipe raccordement</label><input id="n_eq" value="KOUASSI AYMARD"></div>
+      <div class="fld"><label>Entreprise FTTH</label><input id="n_ent" value="ITC"></div>
+      <div class="fld"><label>Besoin poteaux béton</label><input id="n_pb" type="number" value="0"></div>
+      <div class="fld"><label>Besoin poteaux métalliques</label><input id="n_pm" type="number" value="0"></div>
+      <div class="fld"><label>Distance PCO-Client (m)</label><input id="n_dist" type="number"></div>
+    </div>
+    <div class="fld" style="margin-top:10px"><label>Commentaires</label><textarea id="n_com"></textarea></div>
+  </div>
+  <div class="dfoot">
+    <button class="btn" onclick="closeDlg('dlgNew')">Annuler</button>
+    <button class="btn primary" onclick="addInstance()">Ajouter l'instance</button>
+  </div>
+</dialog>
+
+<div id="toast"></div>
+
+<div class="auth" id="authScreen">
+  <div class="authbox" id="authSetup" style="display:none">
+    <div class="shield">&#128274;</div>
+    <h2>Configuration de la sécurité</h2>
+    <p class="sub">Aucun compte n'existe encore. Créez le compte administrateur pour chiffrer la base de données clients (AES-256-GCM).</p>
+    <div class="fld"><label>Nom d'utilisateur</label><input id="s_user" autocomplete="username" value="admin"></div>
+    <div class="fld"><label>Mot de passe * (min. 8 caractères)</label><input id="s_pw" type="password" autocomplete="new-password" oninput="pwStrength(this.value)"><div class="pwbar"><i id="pwFill"></i></div></div>
+    <div class="fld"><label>Confirmer le mot de passe</label><input id="s_pw2" type="password" autocomplete="new-password"></div>
+    <div id="s_migrate" style="display:none" class="fld"><label style="text-transform:none;font-size:12.5px;color:var(--txt)"><input type="checkbox" id="s_do_migrate" checked style="width:auto;vertical-align:middle"> Importer les <b id="s_migrate_n"></b> instances déjà présentes sur cet appareil (migration depuis V1.0 non chiffrée)</label></div>
+    <button class="btn primary" onclick="setupVault()">Créer le coffre-fort chiffré</button>
+    <div class="fld" style="margin-top:10px"><label>ou restaurer une sauvegarde de coffre existante</label><input type="file" accept=".json" onchange="restoreVault(this)"></div>
+    <div class="autherr" id="s_err"></div>
+    <p class="note">Les mots de passe ne sont jamais stockés : seules des clés dérivées (PBKDF2, 250 000 itérations) sont conservées. Sans mot de passe, les données clients restent illisibles — y compris pour toute personne ouvrant ce fichier.</p>
+  </div>
+  <div class="authbox" id="authLogin" style="display:none">
+    <div class="shield">&#128274;</div>
+    <h2>Accès protégé — LBOLY_TECHPRO_2026</h2>
+    <p class="sub">Les données clients sont chiffrées. Authentifiez-vous pour déverrouiller la session.</p>
+    <div class="fld"><label>Nom d'utilisateur</label><input id="l_user" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('l_pw').focus()"></div>
+    <div class="fld"><label>Mot de passe</label><input id="l_pw" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()"></div>
+    <button class="btn primary" onclick="login()">Déverrouiller</button>
+    <div class="autherr" id="l_err"></div>
+    <p class="note" id="l_note"></p>
+  </div>
+</div>
+
+<dialog id="dlgUsers">
+  <div class="dhead"><h2>Gestion des utilisateurs &amp; sécurité</h2><button class="xclose" onclick="closeDlg('dlgUsers')">✕</button></div>
+  <div class="dbody">
+    <div class="section-t">Comptes autorisés</div>
+    <table><thead><tr><th>Utilisateur</th><th>Rôle</th><th>Actions</th></tr></thead><tbody id="usersBody"></tbody></table>
+    <div class="section-t">Ajouter un utilisateur</div>
+    <div class="grid3">
+      <div class="fld"><label>Nom</label><input id="u_name"></div>
+      <div class="fld"><label>Mot de passe (min. 8)</label><input id="u_pw" type="password"></div>
+      <div class="fld"><label>Rôle</label><select id="u_role"><option value="agent">Agent de suivi</option><option value="admin">Administrateur</option></select></div>
+    </div>
+    <button class="btn primary" style="margin-top:8px" onclick="addUser()">Créer le compte</button>
+    <div class="autherr" id="u_err"></div>
+    <div class="section-t">Politique de session</div>
+    <div class="grid2">
+      <div class="fld"><label>Verrouillage automatique après inactivité</label><select id="cfgTimeout" onchange="savePolicy()">
+        <option value="300000">5 minutes</option><option value="600000" selected>10 minutes</option><option value="1800000">30 minutes</option><option value="0">Jamais (non recommandé)</option>
+      </select></div>
+      <div class="fld"><label>Changer mon mot de passe</label><div style="display:flex;gap:6px"><input id="cp_old" type="password" placeholder="Actuel"><input id="cp_new" type="password" placeholder="Nouveau"><button class="btn" onclick="changeMyPassword()">OK</button></div></div>
+    </div>
+    <p class="note">La suppression d'un compte déclenche une rotation complète de la clé de chiffrement (mot de passe administrateur requis) : le compte supprimé ne peut plus lire aucune version des données, même ancienne. Par sécurité, seuls les comptes recréés après rotation restent actifs. Le rôle « agent » peut suivre les instances ; seul « admin » gère les utilisateurs, l'import Excel et la réinitialisation.</p>
+  </div>
+  <div class="dfoot"><button class="btn" onclick="closeDlg('dlgUsers')">Fermer</button></div>
+</dialog>
+
+<script>
+"use strict";
+const APP="LBOLY_TECHPRO_2026.V1.0";
+const KEY="lboly_techpro_2026_v1";
+const VAULT_KEY="lboly_vault_v1";
+const ITER=250000;
+const SEED={"note": "Aucune donnee client en clair dans ce fichier - coffre-fort chiffre requis", "instances": [], "historique": [{"ville": "Yamoussoukro", "raccordes": 8804}, {"ville": "Bouake", "raccordes": 6788}, {"ville": "Katiola", "raccordes": 280}, {"ville": "Man", "raccordes": 101}, {"ville": "Daloa", "raccordes": 84}]};
+
+let instances=[];
+let currentId=null;
+let state={page:1,per:50,sortKey:"dureeAttente",sortDir:-1,charts:{}};
+
+/* ---------- Coffre-fort chiffré (AES-256-GCM + PBKDF2/AES-KW) ---------- */
+let vault=null,dataKey=null,currentUser=null,lockTimer=null;
+const enc=new TextEncoder(),dec=new TextDecoder();
+const b64=buf=>{const a=new Uint8Array(buf);let s="";for(let i=0;i<a.length;i+=0x8000)s+=String.fromCharCode.apply(null,a.subarray(i,i+0x8000));return btoa(s);};
+const unb64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function deriveKEK(pw,salt){
+  const base=await crypto.subtle.importKey("raw",enc.encode(pw),"PBKDF2",false,["deriveKey"]);
+  return crypto.subtle.deriveKey({name:"PBKDF2",salt,iterations:ITER,hash:"SHA-256"},base,{name:"AES-KW",length:256},false,["wrapKey","unwrapKey"]);
+}
+async function wrapDataKey(kek){return b64(await crypto.subtle.wrapKey("raw",dataKey,kek,"AES-KW"));}
+async function unwrapDataKey(pw,salt,wrapped){
+  const kek=await deriveKEK(pw,unb64(salt));
+  return crypto.subtle.unwrapKey("raw",unb64(wrapped),kek,"AES-KW",{name:"AES-GCM",length:256},true,["encrypt","decrypt"]);
+}
+async function encryptNow(){
+  const iv=crypto.getRandomValues(new Uint8Array(12));
+  const ct=await crypto.subtle.encrypt({name:"AES-GCM",iv},dataKey,enc.encode(JSON.stringify(instances)));
+  vault.blob={iv:b64(iv),ct:b64(ct)};
+}
+async function decryptVault(){
+  const pt=await crypto.subtle.decrypt({name:"AES-GCM",iv:unb64(vault.blob.iv)},dataKey,unb64(vault.blob.ct));
+  return JSON.parse(dec.decode(pt));
+}
+function storeVault(){vault.updatedAt=new Date().toISOString();localStorage.setItem(VAULT_KEY,JSON.stringify(vault));}
+function save(){if(!dataKey){toast("Session verrouillée — modifications ignorées");return;}persist();}
+async function persist(){
+  try{await encryptNow();storeVault();}catch(e){toast("Erreur de chiffrement: "+e.message);return;}
+  stampUpdate();refreshAll();
+}
+function isAdmin(){return currentUser&&currentUser.role==="admin";}
+function requireAdmin(){if(isAdmin())return true;toast("Action réservée aux administrateurs");return false;}
+
+/* ---------- Ecran d'authentification ---------- */
+function showPanel(id){
+  document.getElementById("authScreen").style.display="flex";
+  document.getElementById("authSetup").style.display=id==="setup"?"block":"none";
+  document.getElementById("authLogin").style.display=id==="login"?"block":"none";
+}
+function pwStrength(p){
+  let s=0;if(p.length>=8)s++;if(/[A-Z]/.test(p)&&/[a-z]/.test(p))s++;if(/\d/.test(p))s++;if(/[^\w]/.test(p))s++;
+  const f=document.getElementById("pwFill");f.style.width=(s*25)+"%";
+  f.style.background=s<=1?"#f87171":s<=2?"#fbbf24":s===3?"#38bdf8":"#34d399";
+}
+async function setupVault(){
+  const u=document.getElementById("s_user").value.trim(),p=document.getElementById("s_pw").value,p2=document.getElementById("s_pw2").value;
+  const err=document.getElementById("s_err");err.textContent="";
+  if(!u)return err.textContent="Nom d'utilisateur requis.";
+  if(p.length<8)return err.textContent="Le mot de passe doit contenir au moins 8 caractères.";
+  if(p!==p2)return err.textContent="Les mots de passe ne correspondent pas.";
+  try{
+    instances=[];
+    const old=localStorage.getItem(KEY);
+    if(old&&document.getElementById("s_do_migrate").checked){instances=JSON.parse(old);}
+    else instances=JSON.parse(JSON.stringify(SEED.instances));
+    dataKey=await crypto.subtle.generateKey({name:"AES-GCM",length:256},true,["encrypt","decrypt"]);
+    const salt=crypto.getRandomValues(new Uint8Array(16));
+    vault={v:1,policy:{autoLockMs:600000},users:[],blob:null,createdAt:new Date().toISOString()};
+    const kek=await deriveKEK(p,salt);
+    vault.users.push({u,role:"admin",salt:b64(salt),iter:ITER,wrapped:await wrapDataKey(kek)});
+    await encryptNow();storeVault();
+    localStorage.removeItem(KEY);
+    unlockUI(vault.users[0]);
+    toast("Coffre-fort chiffré créé — "+instances.length+" instance(s) protégée(s)");
+  }catch(e){err.textContent="Erreur: "+e.message;}
+}
+function loginErr(m){document.getElementById("l_err").textContent=m;}
+async function login(){
+  const u=document.getElementById("l_user").value.trim(),p=document.getElementById("l_pw").value;
+  loginErr("");
+  const usr=vault.users.find(x=>x.u.toLowerCase()===u.toLowerCase());
+  if(!usr||!p)return loginErr("Utilisateur inconnu ou mot de passe vide.");
+  try{dataKey=await unwrapDataKey(p,usr.salt,usr.wrapped);}
+  catch(e){return loginErr("Mot de passe incorrect.");}
+  try{instances=await decryptVault();}
+  catch(e){return loginErr("Coffre illisible (données corrompues).");}
+  currentUser=usr;unlockUI(usr);
+  document.getElementById("l_pw").value="";
+}
+function unlockUI(usr){
+  document.getElementById("authScreen").style.display="none";
+  document.getElementById("sessionBar").style.display="flex";
+  document.getElementById("authedActions").style.display="flex";
+  document.getElementById("whoami").textContent=usr.u+(usr.role==="admin"?" (admin)":"");
+  document.getElementById("btnUsers").style.display=usr.role==="admin"?"inline-block":"none";
+  instances.forEach(i=>{if(!i.historique)i.historique=[{date:i.dateEnregistrement||"—",note:"Donnée importée du canevas ITC"}];});
+  populateFilters();stampUpdate();refreshAll();armAutoLock();
+}
+function lockApp(manual){
+  dataKey=null;currentUser=null;instances=[];
+  document.getElementById("kpis").innerHTML="";document.getElementById("tbody").innerHTML="";
+  Object.values(state.charts).forEach(c=>{try{c.destroy();}catch(e){}});state.charts={};
+  clearTimeout(lockTimer);
+  document.getElementById("sessionBar").style.display="none";
+  document.getElementById("authedActions").style.display="none";
+  document.getElementById("lastUpdate").innerHTML="Session verrouillée — données chiffrées au repos";
+  if(manual)toast("Session verrouillée");
+  showPanel("login");
+}
+function armAutoLock(){
+  clearTimeout(lockTimer);
+  const ms=vault.policy.autoLockMs;
+  if(ms>0)lockTimer=setTimeout(()=>{if(dataKey)lockApp(true);},ms);
+}
+["pointerdown","keydown"].forEach(ev=>window.addEventListener(ev,()=>{if(dataKey)armAutoLock();}));
+document.addEventListener("visibilitychange",()=>{if(document.hidden&&dataKey&&vault.policy.autoLockMs>0){clearTimeout(lockTimer);lockTimer=setTimeout(()=>lockApp(true),Math.min(vault.policy.autoLockMs,120000));}});
+
+/* ---------- Gestion des utilisateurs ---------- */
+function renderUsers(){
+  document.getElementById("usersBody").innerHTML=vault.users.map(x=>
+    `<tr><td>${esc(x.u)}</td><td>${x.role}</td><td>${x.u===currentUser.u?"<i>(vous)</i>":isAdmin()?`<button class="btn danger" style="padding:4px 9px" onclick="removeUser('${esc(x.u)}')">Supprimer</button>`:""}</td></tr>`).join("");
+  document.getElementById("cfgTimeout").value=vault.policy.autoLockMs;
+  document.getElementById("l_note").textContent="Comptes configurés : "+vault.users.map(x=>x.u).join(", ");
+}
+async function addUser(){
+  if(!requireAdmin())return;
+  const n=document.getElementById("u_name").value.trim(),p=document.getElementById("u_pw").value,r=document.getElementById("u_role").value;
+  const err=document.getElementById("u_err");err.textContent="";
+  if(!n||p.length<8)return err.textContent="Nom requis et mot de passe ≥ 8 caractères.";
+  if(vault.users.some(x=>x.u.toLowerCase()===n.toLowerCase()))return err.textContent="Ce nom existe déjà.";
+  const salt=crypto.getRandomValues(new Uint8Array(16));
+  const kek=await deriveKEK(p,salt);
+  vault.users.push({u:n,role:r,salt:b64(salt),iter:ITER,wrapped:await wrapDataKey(kek)});
+  storeVault();renderUsers();
+  document.getElementById("u_name").value="";document.getElementById("u_pw").value="";
+  toast("Compte « "+n+" » créé");
+}
+async function removeUser(name){
+  if(!requireAdmin())return;
+  if(name===currentUser.u)return toast("Vous ne pouvez pas supprimer votre propre compte.");
+  const others=vault.users.filter(x=>x.u!==currentUser.u&&x.u!==name);
+  if(!confirm("Supprimer « "+name+" » ?\n\nLa clé de chiffrement sera renouvelée : ce compte perdra tout accès, y compris aux copies anciennes du fichier. Les "+others.length+" autre(s) compte(s) devront être revalidés par l'administrateur."))return;
+  const pw=prompt("Confirmez avec VOTRE mot de passe administrateur :","");
+  if(pw===null)return;
+  try{await rotateDataKey(pw);}catch(e){return toast("Échec de rotation : "+e.message);}
+  toast("Compte supprimé — clé de chiffrement renouvelée");
+}
+async function rotateDataKey(adminPw){
+  try{await unwrapDataKey(adminPw,currentUser.salt,currentUser.wrapped);}
+  catch(e){throw new Error("mot de passe administrateur incorrect");}
+  dataKey=await crypto.subtle.generateKey({name:"AES-GCM",length:256},true,["encrypt","decrypt"]);
+  const salt=crypto.getRandomValues(new Uint8Array(16));
+  const kek=await deriveKEK(adminPw,salt);
+  vault.users=[{u:currentUser.u,role:"admin",salt:b64(salt),iter:ITER,wrapped:await wrapDataKey(kek)}];
+  currentUser=vault.users[0];
+  await encryptNow();storeVault();renderUsers();
+}
+async function changeMyPassword(){
+  const o=document.getElementById("cp_old").value,n=document.getElementById("cp_new").value;
+  if(n.length<8)return toast("Nouveau mot de passe trop court.");
+  try{await unwrapDataKey(o,currentUser.salt,currentUser.wrapped);}catch(e){return toast("Mot de passe actuel incorrect.");}
+  const salt=crypto.getRandomValues(new Uint8Array(16));
+  const kek=await deriveKEK(n,salt);
+  currentUser.salt=b64(salt);currentUser.wrapped=await wrapDataKey(kek);
+  const su=vault.users.find(x=>x.u===currentUser.u);Object.assign(su,{salt:currentUser.salt,wrapped:currentUser.wrapped});
+  storeVault();document.getElementById("cp_old").value="";document.getElementById("cp_new").value="";
+  toast("Mot de passe modifié");
+}
+function savePolicy(){
+  vault.policy.autoLockMs=Number(document.getElementById("cfgTimeout").value);
+  storeVault();armAutoLock();toast("Politique de session enregistrée");
+}
+function backupVault(){
+  if(!requireAdmin())return;
+  const raw=localStorage.getItem(VAULT_KEY);
+  if(!raw)return toast("Aucun coffre à sauvegarder");
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([raw],{type:"application/json"}));
+  a.download="LBOLY_coffre_"+new Date().toISOString().slice(0,10)+".json";
+  a.click();setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+  toast("Sauvegarde chiffrée exportée (illisible sans mot de passe)");
+}
+function restoreVault(input){
+  const file=input.files[0];if(!file)return;
+  const rd=new FileReader();
+  rd.onload=e=>{
+    try{
+      const v=JSON.parse(e.target.result);
+      if(!v||!Array.isArray(v.users)||!v.users.length||!v.blob||!v.blob.ct)throw new Error("format invalide");
+      lockApp(false);
+      localStorage.setItem(VAULT_KEY,JSON.stringify(v));
+      vault=v;showPanel("login");
+      document.getElementById("l_note").textContent="Coffre restauré — "+v.users.length+" compte(s). Connectez-vous avec votre mot de passe habituel.";
+      toast("Coffre restauré — authentification requise");
+    }catch(err){toast("Restauration échouée: "+err.message);}
+    input.value="";
+  };
+  rd.readAsText(file);
+}
+function stampUpdate(){document.getElementById("lastUpdate").innerHTML="Données synchronisées <b>"+new Date().toLocaleTimeString("fr-FR")+"</b>";}
+function toast(m){const t=document.getElementById("toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2600);}
+
+const AV_ORDER=["Bloqué","En cours de raccordement","Etudes en cours","Raccordé"];
+function avBadge(a){
+  if(a==="Bloqué")return "b-bloque";
+  if(a==="En cours de raccordement")return "b-encours";
+  if(a==="Raccordé")return "b-raccorde";
+  return "b-etude";
+}
+function filtered(){
+  const v=document.getElementById("dashVille").value;
+  return v?instances.filter(i=>i.ville===v):instances;
+}
+function esc(s){return String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+
+/* ---------- Tableau de bord ---------- */
+function refreshAll(){renderKPIs();renderCharts();renderTable();renderHist();}
+
+function renderKPIs(){
+  const d=filtered();
+  const n=d.length;
+  const bloques=d.filter(i=>i.avancement==="Bloqué").length;
+  const encours=d.filter(i=>i.avancement==="En cours de raccordement").length;
+  const etudes=d.filter(i=>i.avancement==="Etudes en cours").length;
+  const racc=d.filter(i=>i.avancement==="Raccordé").length;
+  const att=d.map(i=>i.dureeAttente).filter(x=>typeof x==="number"&&x>0);
+  const moy=att.length?Math.round(att.reduce((a,b)=>a+b,0)/att.length):0;
+  const critiques=att.length?d.filter(i=>typeof i.dureeAttente==="number"&&i.dureeAttente>365).length:0;
+  const pbTot=d.filter(i=>i.probleme&&i.probleme!=="RAS"&&i.avancement==="Bloqué").length;
+  document.getElementById("kpis").innerHTML=[
+    ["Total instances",n,"Périmètre: "+(document.getElementById("dashVille").value||"toutes villes"),"#0b3d91"],
+    ["Bloquées",bloques,(100*bloques/(n||1)).toFixed(1)+"% du périmètre","#e02424"],
+    ["En cours de raccordement",encours,"Travaux en cours","#f97316"],
+    ["Études en cours",etudes,"Validation technique","#1d63d8"],
+    ["Raccordées (suivi actif)",racc,"À consolider dans l'historique","#0e9f6e"],
+    ["Attente moyenne",moy+" j",critiques+" instances > 1 an","#e02424"],
+    ["Cas avec problème identifié",pbTot,"Sur les instances bloquées","#0b3d91"],
+  ].map(([l,v,s,c])=>`<div class="kpi"><div class="l">${l}</div><div class="v" style="color:${c}">${v}</div><div class="s">${s}</div></div>`).join("");
+  document.getElementById("dashCount").textContent=n+" instance(s) dans le périmètre";
+}
+
+function chart(id,type,labels,values,colors,opt={}){
+  if(!window.Chart){document.getElementById("libWarn").style.display="block";return;}
+  const cv=document.getElementById(id);
+  const ex=Chart.getChart(cv);if(ex)ex.destroy();
+  if(state.charts[id]){try{state.charts[id].destroy();}catch(e){}}
+  state.charts[id]=new Chart(cv,{
+    type,data:{labels,datasets:Array.isArray(values[0])
+      ?values.map((v,idx)=>({label:(opt.series&&opt.series[idx])||("Série "+(idx+1)),data:v,backgroundColor:colors[idx%colors.length],borderRadius:type==="bar"?4:0}))
+      :[{data:values,backgroundColor:colors,borderRadius:type==="bar"?4:0}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:opt.legend!==false,position:opt.legendPos||"right",labels:{color:"#5a6c8e",boxWidth:12}}},
+      scales:type==="doughnut"||type==="pie"?{}:{x:{ticks:{color:"#5a6c8e",maxRotation:60,minRotation:30},grid:{color:"#e5edf9"}},y:{ticks:{color:"#5a6c8e"},grid:{color:"#e5edf9"},beginAtZero:true}},
+      onClick:opt.onClick?(_,e)=>opt.onClick(e):undefined}
+  });
+}
+const PALETTE=["#1d63d8","#f97316","#0b3d91","#fb923c","#60a5fa","#ea580c","#93c5fd","#fdba74","#2563eb","#c2410c"];
+function countBy(arr,fn){const m={};arr.forEach(x=>{const k=fn(x)||"(vide)";m[k]=(m[k]||0)+1;});return Object.entries(m).sort((a,b)=>b[1]-a[1]);}
+
+function renderCharts(){
+  const d=filtered();
+  const av=countBy(d,i=>i.avancement);
+  chart("chAvanc","doughnut",av.map(x=>x[0]),av.map(x=>x[1]),
+    av.map(([k])=>({"Bloqué":"#e02424","En cours de raccordement":"#f97316","Etudes en cours":"#1d63d8","Raccordé":"#0e9f6e"}[k]||"#94a3b8")),{legendPos:"bottom"});
+  const et=countBy(d,i=>i.etudeTechnique);
+  chart("chEtude","bar",et.map(x=>x[0]),et.map(x=>x[1]),et.map((_,i)=>PALETTE[i%PALETTE.length]),{legend:false});
+  const vl=countBy(d,i=>i.ville);
+  chart("chVille","bar",vl.map(x=>x[0]),vl.map(x=>x[1]),vl.map((_,i)=>PALETTE[i%PALETTE.length]),{legend:false});
+  const pr=countBy(d.filter(i=>i.avancement==="Bloqué"&&i.probleme&&i.probleme!=="RAS"),i=>i.probleme).slice(0,7);
+  chart("chProb","bar",pr.map(x=>x[0].slice(0,40)),pr.map(x=>x[1]),pr.map(()=> "#f97316"),{legend:false});
+  const months={};
+  d.forEach(i=>{if(i.dateEnregistrement&&/^\d{4}-\d{2}/.test(i.dateEnregistrement)){const k=i.dateEnregistrement.slice(0,7);months[k]=(months[k]||0)+1;}});
+  const mk=Object.keys(months).sort().slice(-12);
+  chart("chMois","line",mk,mk.map(k=>months[k]),"#1d63d8",{legend:false});
+  const cities=[...new Set(d.map(i=>i.ville))].filter(c=>c);
+  chart("chPoteaux","bar",cities,[
+    cities.map(c=>d.filter(i=>i.ville===c).reduce((a,i)=>a+(i.poteauBeton||0),0)),
+    cities.map(c=>d.filter(i=>i.ville===c).reduce((a,i)=>a+(i.poteauMetal||0),0))
+  ],["#1d63d8","#f97316"],{legend:true,legendPos:"bottom",series:["Poteaux béton","Poteaux métalliques"]});
+}
+
+/* ---------- Table ---------- */
+function renderTable(){
+  const q=document.getElementById("q").value.trim().toLowerCase();
+  const fv=document.getElementById("fVille").value, fa=document.getElementById("fAvanc").value, fe=document.getElementById("fEquipe").value;
+  let d=instances.filter(i=>
+    (!q||(i.nomClient||"").toLowerCase().includes(q)||(i.numeroAbonnement||"").toLowerCase().includes(q)||(i.localisation||"").toLowerCase().includes(q))&&
+    (!fv||i.ville===fv)&&(!fa||i.avancement===fa)&&(!fe||i.equipe===fe));
+  d.sort((a,b)=>{const va=a[state.sortKey]??"",vb=b[state.sortKey]??"";
+    if(typeof va==="number"||typeof vb==="number"){return ((va||0)-(vb||0))*state.sortDir;}
+    return String(va).localeCompare(String(vb))*state.sortDir;});
+  const per=state.per,pages=Math.max(1,Math.ceil(d.length/per));
+  state.page=Math.min(Math.max(1,state.page),pages);
+  const slice=d.slice((state.page-1)*per,state.page*per);
+  document.getElementById("tbody").innerHTML=slice.map(i=>`<tr>
+    <td>${esc(i.numeroAbonnement)}</td><td>${esc(i.nomClient)}</td><td>${esc(i.ville)}</td>
+    <td title="${esc(i.localisation)}">${esc(i.localisation)}</td><td>${esc(i.dateEnregistrement)}</td>
+    <td>${i.dureeAttente??"—"}</td><td>${esc(i.etudeTechnique)}</td>
+    <td><span class="badge ${avBadge(i.avancement)}">${esc(i.avancement)}</span></td>
+    <td title="${esc(i.probleme)}">${esc(i.probleme||"—")}</td><td>${esc(i.equipe)}</td>
+    <td><button class="btn" style="padding:5px 9px" onclick="openDetail(${i.id})">Fiche</button>
+        <button class="btn success" style="padding:5px 9px" onclick="exportReport(${i.id})">Rapport</button></td>
+  </tr>`).join("");
+  document.getElementById("pageInfo").textContent=`Page ${state.page}/${pages} — ${d.length} instance(s)`;
+}
+function sortBy(k){if(state.sortKey===k)state.sortDir*=-1;else{state.sortKey=k;state.sortDir=1;}renderTable();}
+
+function populateFilters(){
+  const cities=[...new Set(instances.map(i=>i.ville))].filter(c=>c).sort();
+  const teams=[...new Set(instances.map(i=>i.equipe))].filter(c=>c).sort();
+  for(const [id,vals] of [["dashVille",cities],["fVille",cities],["fEquipe",teams]]){
+    const sel=document.getElementById(id),cur=sel.value;
+    sel.innerHTML=(id==="dashVille"?'<option value="">Toutes les villes</option>':`<option value="">${id==="fVille"?"Ville — toutes":"Équipe — toutes"}</option>`)+vals.map(v=>`<option>${esc(v)}</option>`).join("");
+    sel.value=cur;
+  }
+  document.getElementById("villeList").innerHTML=cities.map(v=>`<option value="${esc(v)}">`).join("");
+}
+
+/* ---------- Historique ---------- */
+function renderHist(){
+  const tot=SEED.historique.reduce((a,b)=>a+b.raccordes,0);
+  document.getElementById("histBody").innerHTML=SEED.historique.map(h=>
+    `<tr><td>${esc(h.ville)}</td><td>${h.raccordes.toLocaleString("fr-FR")}</td><td>${(100*h.raccordes/tot).toFixed(1)}%</td></tr>`).join("")
+    +`<tr><td><b>Total</b></td><td><b>${tot.toLocaleString("fr-FR")}</b></td><td>100%</td></tr>`;
+}
+
+/* ---------- Fiche / édition ---------- */
+function byId(id){return instances.find(i=>i.id===id);}
+function openDetail(id){
+  currentId=id;const i=byId(id);
+  document.getElementById("dlgTitle").textContent="Fiche — "+(i.nomClient||i.numeroAbonnement);
+  const f=(l,k,type)=>`<div class="fld"><label>${l}</label>${type==="ta"?`<textarea id="d_${k}">${esc(i[k])}</textarea>`:`<input id="d_${k}" value="${esc(i[k]??"")}"${type==="num"?' type="number"':""}>`}</div>`;
+  const sel=(l,k,opts)=>`<div class="fld"><label>${l}</label><select id="d_${k}">${opts.map(o=>`<option ${o===i[k]?"selected":""}>${o}</option>`).join("")}</select></div>`;
+  document.getElementById("dlgBody").innerHTML=`
+    <div class="section-t">Identification</div>
+    <div class="grid3">${f("N° abonnement","numeroAbonnement")}${f("Nom du client","nomClient")}${f("Ville","ville")}${f("Commune","commune")}${f("Localisation","localisation")}${f("Contact 1","contact1")}${f("Contact 2","contact2")}${f("Zone PCO","zonePCO")}${f("PCO","pco")}</div>
+    <div class="section-t">Suivi technique</div>
+    <div class="grid3">${sel("Étude technique","etudeTechnique",["Etude non réalisée","Sans PCO","Avec PCO","PCO Saturé","Hors zone"])}
+      ${sel("Avancement","avancement",AV_ORDER)}
+      ${f("Problème / blocage","probleme")}
+      ${f("Besoin poteaux béton","poteauBeton","num")}${f("Besoin poteaux métalliques","poteauMetal","num")}${f("Distance PCO-Client (m)","distancePCO","num")}
+      ${f("Date d'enregistrement","dateEnregistrement")}${f("Date d'envoi","dateEnvoi")}${f("Date prévisionnelle","datePrevisionnelle")}
+      ${f("Équipe raccordement","equipe")}${f("Entreprise FTTH","entreprise")}${f("Programme déploiement","programme")}
+      ${f("SN ONT","snOnt")}${f("Ligne fixe","ligneFixe")}${f("Survey poteaux","survey")}${f("Implantation poteaux","implantation")}</div>
+    <div class="fld" style="margin-top:10px"><label>Commentaires</label><textarea id="d_commentaires">${esc(i.commentaires)}</textarea></div>
+    <div class="section-t">Journal de progression</div>
+    <ul class="timeline">${(i.historique||[]).slice(-8).reverse().map(h=>`<li><b>${h.date}</b> — ${esc(h.note)}</li>`).join("")||"<li>Aucune modification enregistrée.</li>"}</ul>`;
+  document.getElementById("dlgDetail").showModal();
+}
+function saveDetail(){
+  const i=byId(currentId);const notes=[];
+  ["numeroAbonnement","nomClient","ville","commune","localisation","contact1","contact2","zonePCO","pco","probleme","dateEnregistrement","dateEnvoi","datePrevisionnelle","equipe","entreprise","programme","snOnt","ligneFixe","survey","implantation","commentaires"].forEach(k=>{
+    const el=document.getElementById("d_"+k);if(el&&el.value!==String(i[k]??"")){notes.push(`${k}: "${i[k]||"—"}" → "${el.value}"`);i[k]=el.value;}});
+  ["poteauBeton","poteauMetal","distancePCO"].forEach(k=>{const el=document.getElementById("d_"+k);const v=el.value===""?null:Number(el.value);if(v!==i[k]){notes.push(`${k}: ${i[k]??"—"} → ${v??"—"} `);i[k]=v;}});
+  ["etudeTechnique","avancement"].forEach(k=>{const el=document.getElementById("d_"+k);if(el.value!==i[k]){notes.push(`${k}: "${i[k]||"—"}" → "${el.value}"`);i[k]=el.value;
+    if(k==="avancement"&&el.value==="Raccordé"){i.dateRaccordement=new Date().toISOString().slice(0,10);notes.push("Date de raccordement: "+i.dateRaccordement);}}});
+  if(notes.length){i.historique=i.historique||[];i.historique.push({date:new Date().toISOString().slice(0,10)+" "+new Date().toLocaleTimeString("fr-FR"),note:notes.join(" | ")});toast("Fiche mise à jour — tableau de bord actualisé");}
+  save();closeDlg("dlgDetail");
+}
+function closeDlg(id){document.getElementById(id).close();}
+
+/* ---------- Nouvelle instance ---------- */
+function openNew(){document.getElementById("dlgNew").showModal();}
+function addInstance(){
+  const num=document.getElementById("n_num").value.trim(),cli=document.getElementById("n_cli").value.trim();
+  if(!num||!cli){toast("N° abonnement et nom du client obligatoires");return;}
+  const g=id=>document.getElementById(id).value.trim();
+  const inst={id:Math.max(0,...instances.map(i=>i.id))+1,
+    numeroAbonnement:num,nomClient:cli,ville:g("n_ville").toUpperCase()||"BOUAKE",commune:g("n_commune"),localisation:g("n_loc"),
+    contact1:g("n_c1"),contact2:g("n_c2"),zonePCO:g("n_zone"),pco:g("n_pco"),
+    etudeTechnique:g("n_etude"),avancement:g("n_av"),
+    poteauBeton:Number(g("n_pb"))||0,poteauMetal:Number(g("n_pm"))||0,distancePCO:Number(g("n_dist"))||null,
+    equipe:g("n_eq"),entreprise:g("n_ent")||"ITC",probleme:"",commentaires:g("n_com"),
+    dateEnregistrement:new Date().toISOString().slice(0,10),dureeAttente:0,
+    historique:[{date:new Date().toISOString().slice(0,10),note:"Création de l'instance dans "+APP}]};
+  instances.push(inst);populateFilters();save();closeDlg("dlgNew");toast("Nouvelle instance ajoutée — dashboard mis à jour en temps réel");
+  document.getElementById("q").value="";switchTab("table");state.page=1;
+}
+
+/* ---------- Import Excel ---------- */
+function importExcel(file){
+  if(!file)return;
+  if(!requireAdmin()){document.getElementById("fileImport").value="";document.getElementById("fileImport2").value="";return;}
+  if(!window.XLSX){toast("Librairie SheetJS non disponible");return;}
+  const rd=new FileReader();
+  rd.onload=e=>{
+    try{
+      const wbk=XLSX.read(e.target.result,{type:"array",cellDates:true});
+      const sn=wbk.SheetNames.find(n=>n.toUpperCase().includes("INSTANCE")&&n.toUpperCase()!=="NOUVELLE INSTANCES")||wbk.SheetNames[0];
+      const rows=XLSX.utils.sheet_to_json(wbk.Sheets[sn],{defval:""});
+      const get=(r,...keys)=>{for(const k of Object.keys(r))for(const kk of keys)if(k.toLowerCase().replace(/[^a-z]/g,"").includes(kk))return String(r[k]).trim();return"";};
+      let add=0,upd=0;
+      rows.forEach(r=>{
+        const num=get(r,"numeroabonnement","nabonnement","abonnement"),cli=get(r,"nomclient");
+        if(!num&&!cli)return;
+        const normAv=(get(r,"avancement")||"").toLowerCase();
+        const av=normAv.startsWith("bloqu")?"Bloqué":normAv.includes("raccordement")?"En cours de raccordement":normAv.includes("tude")?"Etudes en cours":get(r,"avancement")||"Etudes en cours";
+        const obj={ville:(get(r,"villes","ville")||"BOUAKE").toUpperCase(),commune:get(r,"commune"),numeroAbonnement:num,nomClient:cli,
+          localisation:get(r,"localisation"),contact1:get(r,"contact1"),contact2:get(r,"contact2"),
+          zonePCO:get(r,"zonepco","zone"),pco:get(r,"pc"),etudeTechnique:get(r,"etudetechnique","etude"),
+          poteauBeton:Number(get(r,"poteaubeton","beton"))||0,poteauMetal:Number(get(r,"poteaumetallique","metallique"))||0,
+          equipe:get(r,"equiperaccordement","equipe"),entreprise:get(r,"entreprisesftth","entrepriseftth")||"ITC",
+          avancement:av,probleme:get(r,"probl","probleme"),commentaires:get(r,"commentaire"),
+          dateEnregistrement:fmtDate(r["Date d'enregistrement d'instance"]||r[Object.keys(r).find(k=>k.toLowerCase().includes("enregistrement"))]),
+          dureeAttente:Number(r[Object.keys(r).find(k=>k.toLowerCase().includes("dure"))])||null};
+        const ex=instances.find(i=>i.numeroAbonnement===num&&num);
+        if(ex){Object.assign(ex,obj);ex.historique=ex.historique||[];ex.historique.push({date:new Date().toISOString().slice(0,10),note:"Mise à jour via import Excel ("+sn+")"});upd++;}
+        else{obj.id=Math.max(0,...instances.map(i=>i.id))+1;obj.historique=[{date:new Date().toISOString().slice(0,10),note:"Importée depuis Excel ("+sn+")"}];instances.push(obj);add++;}
+      });
+      populateFilters();save();toast(`Import ${sn}: ${add} ajoutée(s), ${upd} mise(s) à jour`);
+    }catch(err){toast("Erreur d'import: "+err.message);}
+    document.getElementById("fileImport").value="";document.getElementById("fileImport2").value="";
+  };
+  rd.readAsArrayBuffer(file);
+}
+function fmtDate(v){if(v instanceof Date&&!isNaN(v))return v.toISOString().slice(0,10);const s=String(v||"");const m=s.match(/(\d{4})-(\d{2})-(\d{2})/);return m?m[0]:s.slice(0,10);}
+
+/* ---------- Exports ---------- */
+function sheetDownload(aoa,fileName,title){
+  if(!window.XLSX){toast("Librairie SheetJS non disponible");return;}
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  ws["!cols"]=[{wch:30},{wch:45},{wch:20}];
+  const wbk=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wbk,ws,"Rapport");
+  XLSX.writeFile(wbk,fileName);toast("Fichier généré : "+fileName);
+}
+function exportReport(id){
+  const i=byId(id);const today=new Date().toISOString().slice(0,10);
+  const aoa=[
+    [APP+" — RAPPORT DE PROGRESSION RACCORDEMENT FTTH"],[],
+    ["Génération","","Client","Date"],[today,`${APP}`,i.nomClient,i.numeroAbonnement],[],
+    ["1. IDENTIFICATION DU CLIENT"],
+    ["Champ","Valeur"],
+    ["N° abonnement",i.numeroAbonnement],["Nom du client",i.nomClient],["Ville / Commune",`${i.ville} / ${i.commune||"—"}`],
+    ["Localisation",i.localisation],["Contact 1 / Contact 2",`${i.contact1||"—"} / ${i.contact2||"—"}`],
+    ["Coordonnées",`${i.latitude??"—"} , ${i.longitude??"—"}`],[],
+    ["2. SITUATION RESEAU / ETUDE TECHNIQUE"],
+    ["Champ","Valeur"],
+    ["Zone PCO / HUB",`${i.zonePCO||"—"} / ${i.hub||"—"}`],["PCO",i.pco],
+    ["Résultat étude technique",i.etudeTechnique],["Distance PCO-Client (m)",i.distancePCO??""],
+    ["Besoin poteaux béton",i.poteauBeton||0],["Besoin poteaux métalliques",i.poteauMetal||0],
+    ["Survey poteaux",i.survey||"—"],["Implantation poteaux",i.implantation||"—"],[],
+    ["3. ETAT D'AVANCEMENT"],
+    ["Champ","Valeur"],
+    ["Date d'enregistrement instance",i.dateEnregistrement],["Date d'envoi aux équipes",i.dateEnvoi||"—"],
+    ["Durée d'attente (jours)",i.dureeAttente??""],["Date prévisionnelle",i.datePrevisionnelle||"—"],
+    ["AVANCEMENT ACTUEL",i.avancement],["Équipe raccordement",i.equipe],["Entreprise FTTH",i.entreprise],
+    ["Problème identifié",i.probleme||"RAS"],["Commentaires",i.commentaires||"—"],
+    ["Date réelle de raccordement",i.dateRaccordement||"—"],[],
+    ["4. JOURNAL DE PROGRESSION"],
+    ["Horodatage","Modification"],
+    ...(i.historique||[{date:i.dateEnregistrement,note:"Enregistrement initial"}]).map(h=>[h.date,h.note]),[],
+    ["5. INDICATEURS DU PERIMETRE"],
+    ["Champ","Valeur"],
+    ["Total instances (même ville)",instances.filter(x=>x.ville===i.ville).length],
+    ["Instances bloquées (même ville)",instances.filter(x=>x.ville===i.ville&&x.avancement==="Bloqué").length],
+    ["En cours de raccordement (ville)",instances.filter(x=>x.ville===i.ville&&x.avancement==="En cours de raccordement").length],
+    ["Raccordées (ville, suivi actif)",instances.filter(x=>x.ville===i.ville&&x.avancement==="Raccordé").length],
+  ];
+  const safe=(i.nomClient||"client").replace(/[^\w\-]+/g,"_").slice(0,40);
+  sheetDownload(aoa,`Rapport_progression_${safe}_${i.numeroAbonnement||"sans-num"}.xlsx`);
+}
+function exportAll(){
+  const cols=["numeroAbonnement","nomClient","ville","commune","localisation","contact1","contact2","zonePCO","pco","etudeTechnique","dateEnregistrement","dureeAttente","dateEnvoi","poteauBeton","poteauMetal","survey","implantation","datePrevisionnelle","equipe","distancePCO","entreprise","avancement","probleme","commentaires","programme","dateRaccordement"];
+  const aoa=[cols,...instances.map(i=>cols.map(c=>i[c]??""))];
+  sheetDownload(aoa,`${APP}_Instances_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+function exportDashboard(){
+  const d=filtered();const today=new Date().toISOString().slice(0,10);
+  const aoa=[[APP+" — SYNTHÈSE TABLEAU DE BORD"],[today],[],
+    ["Indicateur","Valeur"],
+    ["Total instances",d.length],
+    ["Bloquées",d.filter(i=>i.avancement==="Bloqué").length],
+    ["En cours de raccordement",d.filter(i=>i.avancement==="En cours de raccordement").length],
+    ["Etudes en cours",d.filter(i=>i.avancement==="Etudes en cours").length],
+    ["Raccordées",d.filter(i=>i.avancement==="Raccordé").length],
+    ["Attente moyenne (j)",Math.round(d.map(i=>i.dureeAttente).filter(x=>typeof x==="number"&&x>0).reduce((a,b)=>a+b,0)/(d.length||1))],[],
+    ["Répartition par avancement","Nb"],...countBy(d,i=>i.avancement).map(([k,v])=>[k,v]),[],
+    ["Résultat étude technique","Nb"],...countBy(d,i=>i.etudeTechnique).map(([k,v])=>[k,v]),[],
+    ["Principaux blocages (instances bloquées)","Nb"],...countBy(d.filter(i=>i.avancement==="Bloqué"&&i.probleme&&i.probleme!=="RAS"),i=>i.probleme).slice(0,10).map(([k,v])=>[k,v]),[],
+    ["Raccordements historiques consolidés","Nb"],...SEED.historique.map(h=>[h.ville,h.raccordes])];
+  sheetDownload(aoa,`Synthese_dashboard_${today}.xlsx`);
+}
+function printReport(id){
+  const i=byId(id);const w=window.open("","_blank");
+  const L=(l,v)=>`<tr><td>${l}</td><td>${esc(v??"")||"—"}</td></tr>`;
+  w.document.write(`<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>Rapport ${esc(i.nomClient)}</title>
+  <style>body{font-family:Arial,sans-serif;color:#111;max-width:800px;margin:24px auto;padding:0 16px}
+  h1{font-size:18px;border-bottom:3px solid #f97316;padding-bottom:8px;color:#0b3d91}h2{font-size:13px;color:#1d63d8;margin:18px 0 6px;text-transform:uppercase}
+  table{width:100%;border-collapse:collapse;font-size:12px}td,th{border:1px solid #bbb;padding:6px 8px;text-align:left}
+  td:first-child{background:#f3f4f6;width:40%}.hd{display:flex;justify-content:space-between;font-size:12px;color:#555;margin:6px 0 14px}
+  .badge{padding:3px 10px;border-radius:12px;font-weight:bold;background:${i.avancement==="Bloqué"?"#fee2e2":i.avancement==="Raccordé"?"#d1fae5":"#fef3c7"}}</style></head><body>
+  <h1>${APP} — Rapport de progression raccordement FTTH</h1>
+  <div class="hd"><span>Généré le ${new Date().toLocaleString("fr-FR")}</span><span>Réf. ${esc(i.numeroAbonnement)}</span></div>
+  <h2>1. Identification du client</h2><table>${L("Nom du client",i.nomClient)}${L("N° abonnement",i.numeroAbonnement)}${L("Ville / Commune",i.ville+" / "+(i.commune||"—"))}${L("Localisation",i.localisation)}${L("Contacts",(i.contact1||"—")+" / "+(i.contact2||"—"))}</table>
+  <h2>2. Situation réseau et étude technique</h2><table>${L("Zone PCO / HUB",(i.zonePCO||"—")+" / "+(i.hub||"—"))}${L("PCO",i.pco)}${L("Etude technique",i.etudeTechnique)}${L("Distance PCO-Client (m)",i.distancePCO)}${L("Besoin poteaux béton / métalliques",(i.poteauBeton||0)+" / "+(i.poteauMetal||0))}</table>
+  <h2>3. Avancement</h2><table>${L("Date d'enregistrement",i.dateEnregistrement)}${L("Date d'envoi",i.dateEnvoi)}${L("Durée d'attente (jours)",i.dureeAttente)}${L("Date prévisionnelle",i.datePrevisionnelle)}${L("Équipe / Entreprise",(i.equipe||"—")+" / "+(i.entreprise||"—"))}${L("Problème identifié",i.probleme)}${L("Commentaires",i.commentaires)}
+  <tr><td>État actuel</td><td><span class="badge">${esc(i.avancement)}</span></td></tr></table>
+  <h2>4. Journal de progression</h2><table><tr><th>Date</th><th>Événement</th></tr>${(i.historique||[]).map(h=>`<tr><td>${h.date}</td><td>${esc(h.note)}</td></tr>`).join("")||"<tr><td colspan=2>Aucun événement enregistré</td></tr>"}</table>
+  <p style="margin-top:22px;font-size:11px;color:#777">Document généré automatiquement par ${APP} — Suivi des activités FTTH.</p>
+  <script>window.onload=()=>window.print()<\/script></body></html>`);
+  w.document.close();
+}
+
+/* ---------- Divers ---------- */
+function switchTab(t){
+  document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.tab===t));
+  document.querySelectorAll("main .tab").forEach(s=>s.classList.toggle("active",s.id==="tab-"+t));
+  if(t==="dash")renderCharts();
+}
+function resetData(){
+  if(!requireAdmin())return;
+  if(!confirm("VIDER LA BASE DE DONNÉES ?\n\nToutes les instances chiffrées seront définitivement supprimées de cet appareil. Exportez d'abord une sauvegarde via « Exporter tout (XLSX) »."))return;
+  instances=[];populateFilters();save();toast("Base vidée");
+}
+
+/* ---------- Initialisation avec verrouillage ---------- */
+(async function init(){
+  if(!window.crypto||!crypto.subtle){
+    document.getElementById("authScreen").innerHTML='<div class="authbox"><h2>Navigateur non compatible</h2><p class="sub">Le chiffrement exige WebCrypto : ouvrez ce fichier en local (file://) ou via HTTPS.</p></div>';
+    showPanel("none");return;
+  }
+  if(!window.Chart||!window.XLSX)document.getElementById("libWarn").style.display="block";
+  document.getElementById("lastUpdate").innerHTML="Accès verrouillé — données clients chiffrées (AES-256-GCM)";
+  try{vault=JSON.parse(localStorage.getItem(VAULT_KEY));}catch(e){vault=null;}
+  if(vault&&vault.users&&vault.users.length){
+    showPanel("login");
+    document.getElementById("l_note").textContent="Comptes configurés : "+vault.users.map(x=>x.u).join(", ");
+  }else{
+    let mig=0;try{const old=JSON.parse(localStorage.getItem(KEY));if(Array.isArray(old))mig=old.length;}catch(e){}
+    if(mig){document.getElementById("s_migrate").style.display="block";document.getElementById("s_migrate_n").textContent=mig;}
+    showPanel("setup");
+  }
+})();
+</script>
+</body>
+</html>
